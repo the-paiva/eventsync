@@ -15,6 +15,7 @@ class Usuario(AbstractUser):
     )
     
     papel = models.CharField(max_length=20, choices=OPCOES_PAPEL, default='participante', verbose_name="Papel")
+    
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email']
 
