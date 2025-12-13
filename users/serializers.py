@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 Usuario = get_user_model()
@@ -33,3 +34,27 @@ class RegistroSerializer(serializers.ModelSerializer):
             papel=dados_validados.get('papel', 'participante')
         )
         return usuario
+
+
+class LoginPersonalizadoSerializer(TokenObtainPairSerializer):
+    """
+    Estende o serializer padrão do JWT para retornar dados do usuário
+    junto com os tokens de acesso.
+    """
+    def validate(self, attrs):
+        # 1. Executa a validação padrão (verifica senha e gera tokens)
+        data = super().validate(attrs)
+
+        # 2. Adiciona dados personalizados ao dicionário de resposta (JSON)
+        # self.user é o usuário autenticado que o método super() encontrou
+        data['usuario'] = {
+            'id': self.user.id,
+            'username': self.user.username,
+            'email': self.user.email,
+            'papel': self.user.papel, # O CAMPO MAIS IMPORTANTE
+            'cidade': self.user.cidade,
+            'url_foto': self.user.url_foto if self.user.url_foto else None
+        }
+
+        # O retorno será: { "access": "...", "refresh": "...", "usuario": { ... } }
+        return data
