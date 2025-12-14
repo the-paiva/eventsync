@@ -1,8 +1,18 @@
+// API configuration and helper functions for Django backend integration
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
 export interface LoginCredentials {
   username: string
   password: string
+}
+
+export interface RegisterData {
+  username: string
+  email: string
+  senha: string
+  cidade: string
+  papel: "organizador" | "participante"
 }
 
 export interface Usuario {
@@ -78,4 +88,29 @@ export function getAccessToken(): string | null {
 export function getUser(): Usuario | null {
   const userStr = localStorage.getItem("user")
   return userStr ? JSON.parse(userStr) : null
+}
+
+export async function register(data: RegisterData): Promise<Usuario> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/autenticacao/registrar/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ detail: "Erro ao criar conta" }))
+      throw new ApiError(response.status, errorData.detail || errorData.message || "Erro ao criar conta")
+    }
+
+    const usuario: Usuario = await response.json()
+    return usuario
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error
+    }
+    throw new ApiError(0, "Erro de conexão com o servidor. Verifique sua conexão.")
+  }
 }
