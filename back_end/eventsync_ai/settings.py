@@ -1,5 +1,6 @@
+import dj_database_url
 from pathlib import Path
-from decouple import config
+from decouple import config, Csv
 from datetime import timedelta
 
 
@@ -14,9 +15,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=Csv())
 
 
 # Application definition
@@ -47,6 +48,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 REST_FRAMEWORK = {
@@ -89,7 +91,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'eventsync_ai.wsgi.application'
 
 
-# Configurações de Banco de Dados
+# Configurações de Banco de Dados (Local)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -100,6 +102,12 @@ DATABASES = {
         'PORT': config('DB_PORT', default='5432'),
     }
 }
+
+
+# Configurações de Banco de Dados (Em produção)
+db_from_env = dj_database_url.config(conn_max_age=600)
+DATABASES['default'].update(db_from_env)
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -132,3 +140,7 @@ STATIC_URL = 'static/'
 AUTH_USER_MODEL = 'users.Usuario'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
