@@ -1,17 +1,17 @@
 from rest_framework import serializers
 from .models import Inscricao, StatusInscricao
-from events.models import Evento
+from events.models import Evento 
 from django.contrib.auth import get_user_model
 
 
 Usuario = get_user_model()
 
 
-"""
-Serializer para o Participante se inscrever em um evento e para o Organizador
-gerenciar essas inscrições.
-"""
 class InscricaoSerializer(serializers.ModelSerializer):
+    """
+    Serializer para o Participante se inscrever em um evento e para o Organizador
+    gerenciar essas inscrições (aprovando/recusando).
+    """
     # Campos de leitura apenas, para serem exibidos no Front-end
     participante_username = serializers.ReadOnlyField(source='participante.username')
     evento_titulo = serializers.ReadOnlyField(source='evento.titulo')
@@ -29,19 +29,18 @@ class InscricaoSerializer(serializers.ModelSerializer):
             'participante', 
             'participante_username',
             'evento_titulo',
-            'status', 
+            'status',
             'data_inscricao', 
             'codigo_verificacao',
             'check_in_realizado',
             'e_o_usuario_logado',
         ]
 
-        # Campos que só podem ser lidos (ID, quem criou, status, código)
+        # status FOI REMOVIDO daqui.
         read_only_fields = (
             'participante', 
-            'status', 
             'codigo_verificacao', 
-            'check_in_realizado', 
+            'check_in_realizado', # Check-in deve ser feito por uma rota customizada, não por PATCH simples.
             'data_inscricao',
             'e_o_usuario_logado',
         )
@@ -68,11 +67,13 @@ class InscricaoSerializer(serializers.ModelSerializer):
         # 3. Verifica se o evento exige aprovação, definindo o status inicial
         evento = validated_data['evento']
         if evento.exige_aprovacao:
+            # Se exige aprovação, status inicial é PENDENTE
             validated_data['status'] = StatusInscricao.PENDENTE
         else:
+            # Se não exige, status inicial é APROVADA (pagamento/vaga garantida)
             validated_data['status'] = StatusInscricao.APROVADA
             
-        # 4. Verifica a capacidade máxima
+        # 4. Verifica a capacidade máxima (Checagem de vaga)
         if evento.vagas_restantes <= 0:
             raise serializers.ValidationError({"erro": "As vagas para este evento estão esgotadas."})
 
