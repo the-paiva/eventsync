@@ -19,6 +19,7 @@ class EventoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Evento
+        
         fields = (
             'id', 
             'titulo', 
@@ -31,7 +32,7 @@ class EventoSerializer(serializers.ModelSerializer):
             'prazo_inscricao', 
             'tipo', 
             'preco', 
-            'status',
+            'status', 
             'capacidade',
             'exige_aprovacao',
             'banner_url',
@@ -41,8 +42,7 @@ class EventoSerializer(serializers.ModelSerializer):
             'vagas_restantes', # Campo de leitura
         )
 
-        # Campos que não podem ser alterados diretamente via JSON
-        read_only_fields = ('organizador', 'status', 'e_gratuito', 'vagas_restantes') 
+        read_only_fields = ('organizador', 'e_gratuito', 'vagas_restantes') 
 
 
     def get_e_gratuito(self, obj):
@@ -53,7 +53,6 @@ class EventoSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Define o organizador automaticamente como o usuário logado
         validated_data['organizador'] = self.context['request'].user
-
         # Define o status inicial como 'rascunho'
         validated_data['status'] = 'rascunho' 
         
@@ -62,4 +61,3 @@ class EventoSerializer(serializers.ModelSerializer):
             validated_data['preco'] = 0.00
             
         return super().create(validated_data)
-        
